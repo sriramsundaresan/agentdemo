@@ -25,6 +25,7 @@ app/services/workflow_access_service.py
 app/workflow/__init__.py
 app/workflow/provider.py
 app/workflow/repository.py
+app/workflow/request_workflow.py
 conversational_banking_mock.egg-info/PKG-INFO
 conversational_banking_mock.egg-info/SOURCES.txt
 conversational_banking_mock.egg-info/dependency_links.txt
