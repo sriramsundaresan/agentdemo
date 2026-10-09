@@ -1,5 +1,4 @@
 import asyncio
-import re
 from datetime import datetime, timezone
 from uuid import uuid4
 
@@ -20,7 +19,12 @@ class CentralOrchestrator:
         items = []
         if "balance" in lower:
             items.append(("balance_inquiry", "read-only", []))
-        transfer_action = re.search(r"\btransfer\s+(?:thb|money|funds|from)\b|\btransfer\s+.{1,60}\s+to\b", lower)
+        transfer_action = any(
+            f"transfer {qualifier}" in lower for qualifier in ("thb", "money", "funds", "from")
+        )
+        if not transfer_action and "transfer " in lower:
+            remainder = lower.split("transfer ", 1)[1].lstrip()
+            transfer_action = bool(remainder and remainder[0].isdigit())
         if transfer_action:
             items.append(("funds_transfer", "financial", []))
         if any(word in lower for word in ("bill", "electricity", "pay")) and transfer_action:
