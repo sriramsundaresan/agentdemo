@@ -12,11 +12,25 @@ class MessageRequest(BaseModel):
 
 class ConsentDecision(BaseModel):
     challenge_id: str
+    conversation_id: str
     payload_hash: str
     decision: Literal["APPROVE", "REJECT"]
     evidence_method: Literal["MOCK_BIOMETRIC", "MOCK_PIN"] = "MOCK_BIOMETRIC"
     evidence: str = "synthetic-demo-evidence"
     command_id: str
+
+
+class WorkflowCommand(BaseModel):
+    command_id: str
+    command_type: Literal["WORK_ITEM_CONSENT_APPROVED"]
+    work_item_id: str
+    challenge_id: str
+    payload_hash: str
+    confirmation_record_id: str
+
+
+class WorkflowStartRequest(BaseModel):
+    workflow: dict
 
 
 class DeveloperControls(BaseModel):
@@ -32,7 +46,7 @@ class WorkItem(BaseModel):
     intent: str
     type: Literal["read-only", "knowledge", "financial"]
     status: str
-    dependencies: list[str] = []
+    dependencies: list[str] = Field(default_factory=list)
     agent_id: str | None = None
     policy_status: str
     consent_status: str

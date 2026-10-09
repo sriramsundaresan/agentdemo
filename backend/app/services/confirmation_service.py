@@ -36,6 +36,8 @@ class ConfirmationService:
         challenge = item.get("challenge")
         if not challenge or decision["challenge_id"] != challenge["challenge_id"]:
             raise ValueError("Invalid confirmation challenge")
+        if decision.get("conversation_id") != challenge["customer_id"]:
+            raise ValueError("Consent customer does not own this challenge")
         if decision["payload_hash"] != challenge["payload_hash"]:
             raise ValueError("Consent payload hash mismatch")
         if datetime.fromisoformat(challenge["expires_at"]) <= datetime.now(timezone.utc):
@@ -52,11 +54,20 @@ class ConfirmationService:
         if not decision.get("evidence"):
             raise ValueError("Mock biometric/PIN evidence is required")
         item["confirmation_record_id"] = f"CONF-{uuid4().hex[:10]}"
+        item["confirmation_record_payload_hash"] = challenge["payload_hash"]
+        item["confirmation_record_challenge_id"] = challenge["challenge_id"]
         item["consent_status"] = "CONFIRMED"
         item["status"] = "CONFIRMED"
         return workflow_access_service.consent_command(
             workflow,
-            {"command_id": decision["command_id"], "work_item_id": item["work_item_id"]},
+            {
+                "command_id": decision["command_id"],
+                "command_type": "WORK_ITEM_CONSENT_APPROVED",
+                "work_item_id": item["work_item_id"],
+                "challenge_id": challenge["challenge_id"],
+                "payload_hash": challenge["payload_hash"],
+                "confirmation_record_id": item["confirmation_record_id"],
+            },
             "confirmation-service",
         )
 

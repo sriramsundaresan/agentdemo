@@ -22,7 +22,13 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>. The API and generated OpenAPI documentation are at <http://localhost:8000> and <http://localhost:8000/docs>. The presentation runs independently: open `presentation/index.html` in a browser or serve the repository root with `python -m http.server 9000` and visit `/presentation/`.
+Open <http://localhost:5173>. The API and generated OpenAPI documentation are at <http://localhost:8000> and <http://localhost:8000/docs>. The standalone presentation uses only local assets and the copied Markdown source. To open it with browser-safe local file access, run this from the repository root:
+
+```bash
+python -m http.server 9000
+```
+
+Then visit <http://localhost:9000/presentation/>. No internet connection is needed for the presentation.
 
 ## Tests and build
 

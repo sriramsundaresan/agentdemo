@@ -7,6 +7,7 @@ from uuid import uuid4
 class EventBus:
     def __init__(self):
         self.subscribers: dict[str, set[asyncio.Queue]] = defaultdict(set)
+        self.handlers = set()
         self.history: list[dict] = []
 
     async def publish(self, event: dict, *, duplicate: bool = False, delay: float = 0):
@@ -15,6 +16,10 @@ class EventBus:
         event.setdefault("event_id", str(uuid4()))
         event.setdefault("occurred_at", datetime.now(timezone.utc).isoformat())
         self.history.append(event)
+        for handler in tuple(self.handlers):
+            await handler(event)
+            if duplicate:
+                await handler(event)
         for queue in tuple(self.subscribers[event["workflow_id"]]):
             queue.put_nowait(event)
             if duplicate:
@@ -24,6 +29,9 @@ class EventBus:
         queue = asyncio.Queue()
         self.subscribers[workflow_id].add(queue)
         return queue
+
+    def subscribe_handler(self, handler):
+        self.handlers.add(handler)
 
     def unsubscribe(self, workflow_id: str, queue: asyncio.Queue):
         self.subscribers[workflow_id].discard(queue)

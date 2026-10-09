@@ -35,10 +35,12 @@ class ConversationManager:
     async def emit(self, workflow_id: str, event_name: str, response_status: str,
                    *, work_item_id: str | None = None, caller: str = "Request Workflow",
                    executor: str = "Conversation Manager", contract: str = "WorkflowStatusEvent",
-                   message: str | None = None, mode: str = "normal"):
+                   message: str | None = None, mode: str = "normal",
+                   conversation_id: str | None = None):
         now = datetime.now(timezone.utc).isoformat()
         event = {
-            "event_id": str(uuid4()), "event_name": event_name, "caller": caller,
+            "schema_version": "1.0", "event_id": str(uuid4()), "event_name": event_name,
+            "conversation_id": conversation_id, "trace_id": str(uuid4()), "caller": caller,
             "executor": executor, "contract": contract, "correlation_id": workflow_id,
             "workflow_id": workflow_id, "work_item_id": work_item_id,
             "request_status": response_status, "response_status": response_status,
@@ -49,8 +51,8 @@ class ConversationManager:
             duplicate=mode == "duplicate_events",
             delay=0.5 if mode == "delay_events" else 0,
         )
-        await self.project_event(event)
         return event
 
 
 conversation_manager = ConversationManager()
+event_bus.subscribe_handler(conversation_manager.project_event)

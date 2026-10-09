@@ -27,5 +27,4 @@ class WorkflowRepository:
         record.updated_at = datetime.now(timezone.utc)
         flag_modified(record, "data")
         self.session.commit()
-        self.session.refresh(record)
         return record
