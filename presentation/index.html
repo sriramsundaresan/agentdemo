@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f7fb">
+  <title>Conversational Banking · Architecture presentation</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header" id="site-header">
+    <div class="brand"><span class="brand-icon">N</span><span><b>Conversational Banking</b><small>REFERENCE ARCHITECTURE · INTERACTIVE PRESENTATION</small></span></div>
+    <div class="header-actions"><span class="source-label">Architecture source: docs/architecture-summary.md</span><button id="theme-toggle" aria-label="Toggle light or dark mode">◐ Theme</button><button id="collapse-header" aria-label="Collapse header">Collapse header</button></div>
+  </header>
+  <main>
+    <section class="hero">
+      <div><span class="eyebrow">A TRUSTED EXECUTION MODEL FOR CONVERSATIONAL BANKING</span><h1>AI understands and prepares.<br><em>Deterministic systems execute.</em></h1><p>One customer request becomes one durable workflow with N work items. Policy controls access, the customer confirms each financial action, and bank systems remain authoritative.</p></div>
+      <div class="hero-principle"><span>THE CORE PRINCIPLE</span><strong>Natural-language messages go through the Orchestrator. Structured UI actions go directly to deterministic services and the existing Request Workflow.</strong></div>
+    </section>
+    <nav class="tabs" aria-label="Architecture sections">
+      <button class="active" data-tab="overview">Platform overview</button>
+      <button data-tab="responsibilities">Component responsibilities</button>
+      <button data-tab="request">One request · N work items</button>
+      <button data-tab="natural">Natural-language request</button>
+      <button data-tab="prepare">Preparation and consent</button>
+      <button data-tab="resume">Consent and workflow resume</button>
+      <button data-tab="statuses">Request and response statuses</button>
+      <button data-tab="ownership">Caller · executor · state owner</button>
+      <button data-tab="contracts">API contracts</button>
+      <button data-tab="technology">Technology mapping</button>
+    </nav>
+    <section class="toolbar" aria-label="Diagram controls">
+      <div><b id="section-title">Platform overview</b><span id="section-subtitle">Architecture boundaries and trust zones</span></div>
+      <div class="toolbar-controls">
+        <label for="zoom-select">Zoom</label><select id="zoom-select"><option value=".75">75%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="fit">Fit width</option></select>
+        <button id="maximize">⛶ Maximize diagram</button><button id="reset-view">Reset view</button>
+      </div>
+    </section>
+    <article class="content">
+      <section class="tab-panel active" id="tab-overview">
+        <div class="section-intro"><div><span class="eyebrow">01 / PLATFORM OVERVIEW</span><h2>One controlled path from conversation to bank outcome</h2><p>Preparation, consent, durable orchestration and commit execution are separate responsibilities. Every arrow has an explicit caller and executor; the workflow and bank own distinct authoritative state.</p></div><span class="rule-pill">BANK SYSTEMS REMAIN AUTHORITATIVE</span></div>
+        <div class="trust-grid"><div class="trust-card blue"><span>01 · PLAN</span><h3>Understand the request</h3><p>Conversation Manager → Central Orchestrator → pre-agent Policy Service.</p></div><div class="trust-card purple"><span>02 · PREPARE</span><h3>Build one durable plan</h3><p>One Request Workflow coordinates N work items and their dependencies.</p></div><div class="trust-card amber"><span>03 · CONFIRM</span><h3>Bind customer consent</h3><p>Confirmation Service binds every financial approval to its validated payload hash.</p></div><div class="trust-card green"><span>04 · EXECUTE</span><h3>Commit deterministically</h3><p>Transaction Worker calls Commit Gateway; the mock Bank API owns final status.</p></div></div>
+        <h3 class="subheading">System boundary map</h3>
+        <div class="diagram-shell"><div class="diagram-toolbar"><span>CALLER → EXECUTOR · SYNCHRONOUS CALLS AND ASYNCHRONOUS EVENTS</span><span class="diagram-legend"><i class="blue-dot"></i>conversation / read <i class="amber-dot"></i>policy / consent <i class="purple-dot"></i>workflow / events <i class="green-dot"></i>deterministic commit</span></div><div class="diagram-scroll" tabindex="0"><div class="diagram-board" data-mermaid="overview">
+          <div class="swimlane-header"><span class="lane-label">CUSTOMER</span><span class="participant blue">Browser / Channel UI</span><span class="participant blue">Conversation Manager</span><span class="participant blue">Central Orchestrator</span><span class="participant amber">Policy Service</span><span class="participant purple">Request Workflow</span><span class="participant amber">Confirmation Service</span><span class="participant green">Transaction Worker</span><span class="participant green">Mock Bank API</span></div>
+          <div class="flow-row"><span class="lane-label">PLAN</span><span class="flow-step blue">Natural-language message</span><span class="flow-arrow">→</span><span class="flow-step blue">Interpret and plan intents</span><span class="flow-arrow">→</span><span class="flow-step amber">Decision only</span><span class="flow-arrow">→</span><span class="flow-step purple">Start one workflow · N items</span></div>
+          <div class="flow-row"><span class="lane-label">PREPARE</span><span class="flow-step blue">Structured request</span><span class="flow-arrow">→</span><span class="flow-step purple">Scoped Specialist Agent</span><span class="flow-arrow">→</span><span class="flow-step blue">Read / prepare APIs</span><span class="flow-note">Agent activity ends before consent.</span></div>
+          <div class="flow-row"><span class="lane-label">CONSENT</span><span class="flow-step amber">Approve exact payload</span><span class="flow-arrow">→</span><span class="flow-step amber">Challenge + Confirmation Record</span><span class="flow-arrow">→</span><span class="flow-step purple">Resume existing workflow</span><span class="flow-note">Structured action bypasses Orchestrator.</span></div>
+          <div class="flow-row"><span class="lane-label">EXECUTE</span><span class="flow-step purple">Verify policy + consent + dependency</span><span class="flow-arrow">→</span><span class="flow-step green">Deterministic Transaction Worker</span><span class="flow-arrow">→</span><span class="flow-step green">Commit Gateway → Bank API</span><span class="flow-note">UNKNOWN means reconcile; never blindly retry.</span></div>
+          <div class="state-strip"><b>AUTHORITATIVE OWNERS</b><span>Request Workflow: request + work-item state</span><span>Confirmation Service: consent evidence</span><span>Conversation Manager: customer-facing projection</span><span>Bank API: transaction status + reference</span></div>
+        </div></div></div>
+        <div class="diagram-shell mermaid-shell"><div class="diagram-toolbar"><span>ARCHITECTURE FLOW · MERMAID SOURCE RENDERED LOCALLY</span></div><pre class="mermaid">flowchart LR
+          Customer[Customer] -->|Natural language| CM[Conversation Manager]
+          CM -->|Plan request| Orch[Central Orchestrator]
+          Orch -->|Pre-agent decision| Policy[Policy Service]
+          Orch -->|One workflow + N items| WF[Request Workflow]
+          WF -->|Scoped preparation| Agent[Specialist Agent]
+          Agent -->|Read and prepare only| Capability[Capability Gateway]
+          WF -->|Create challenge| Confirm[Confirmation Service]
+          Confirm -->|Structured consent command| WF
+          WF -->|Deterministic activity| Worker[Transaction Worker]
+          Worker -->|Commit| Bank[Mock Bank API]
+          Bank -->|Authoritative status| WF
+          WF -->|Async status event| CM</pre></div>
+        <div class="callout"><b>Architecture invariant</b><span>Agents may read and prepare but never call Commit APIs. Only workflow-controlled deterministic workers execute a consented transaction.</span></div>
+      </section>
+
+      <section class="tab-panel" id="tab-responsibilities">
+        <div class="section-intro"><div><span class="eyebrow">02 / COMPONENT RESPONSIBILITIES</span><h2>Explicit responsibilities and authority</h2><p>Logical boundaries remain visible even when the prototype runs in one process.</p></div></div>
+        <div class="responsibility-grid">
+          <article class="responsibility blue"><h3>Conversation Manager</h3><p>Owns conversation state and customer-facing status projection. Calls the Orchestrator for natural language; listens to workflow events and builds channel-neutral responses.</p><small>CALLS · Central Orchestrator · SSE projection</small></article>
+          <article class="responsibility blue"><h3>Central Orchestrator</h3><p>Identifies candidate intents, proposes a dependency graph, evaluates pre-agent policy, applies the decision, and starts exactly one Request Workflow.</p><small>CALLS · Policy Service · Workflow Access Service</small></article>
+          <article class="responsibility amber"><h3>Policy Service</h3><p>Returns PERMIT, DENY or obligations. It does not invoke agents and does not start or resume workflows.</p><small>AUTHORITY · Decision point only</small></article>
+          <article class="responsibility purple"><h3>Request Workflow</h3><p>Owns durable request and work-item state, dependencies, idempotency and unknown-outcome reconciliation. Waits durably for consent.</p><small>AUTHORITY · Request and work-item state</small></article>
+          <article class="responsibility blue"><h3>Specialist Agent</h3><p>Receives one scoped preparation task, resolves parameters and returns typed prepared work. It finishes before consent is requested.</p><small>ALLOWED · Read + Prepare / Validate only</small></article>
+          <article class="responsibility amber"><h3>Confirmation Service</h3><p>Creates challenge, validates ownership/expiry/payload hash and simulated approval evidence, then records consent. It never executes transactions.</p><small>AUTHORITY · Immutable Confirmation Record</small></article>
+          <article class="responsibility green"><h3>Transaction Worker</h3><p>Deterministic application code verifies policy, consent, hash and dependencies, then calls the Commit Gateway with a stable idempotency key.</p><small>ALLOWED · Commit Gateway execution identity</small></article>
+          <article class="responsibility green"><h3>Bank API / System of Record</h3><p>Validates and posts financial operations. Owns the authoritative status and reference and exposes status reconciliation.</p><small>AUTHORITY · Balance, posting, final status</small></article>
+        </div>
+      </section>
+
+      <section class="tab-panel" id="tab-request">
+        <div class="section-intro"><div><span class="eyebrow">03 / REQUEST AND WORKFLOW MODEL</span><h2>One request, one workflow, three independent work items</h2><p>A workflow coordinates parallel preparation and explicit dependencies; it is never split into one workflow per intent.</p></div><span class="rule-pill purple-rule">1 REQUEST = 1 WORKFLOW = N WORK ITEMS</span></div>
+        <div class="request-banner"><span>Customer request</span><strong>“Check my balance, transfer THB 10,000 to Somchai, then pay my electricity bill.”</strong></div>
+        <div class="work-graph">
+          <article class="graph-item completed"><div><b>WI-1</b><span>Read-only · Balance inquiry</span></div><span class="graph-status">Completes independently</span><small>Agent prepares in parallel · no consent</small></article>
+          <article class="graph-item consent"><div><b>WI-2</b><span>Financial · Funds transfer</span></div><span class="graph-status">Consent challenge 1</span><small>Prepare → validate → customer approval → worker commit</small></article>
+          <div class="dependency-arrow"><span>WI-2 must be COMPLETED by the bank before WI-3 unblocks</span></div>
+          <article class="graph-item blocked"><div><b>WI-3</b><span>Financial · Electricity bill</span></div><span class="graph-status">BLOCKED_BY_DEPENDENCY</span><small>Revalidated after transfer completes · separate consent challenge 2</small></article>
+        </div>
+        <div class="diagram-shell compact-diagram"><div class="diagram-toolbar"><span>ONE WORKFLOW CONTAINS ALL ITEMS · INDEPENDENT ITEMS MAY PREPARE IN PARALLEL</span></div><div class="diagram-scroll" tabindex="0"><div class="diagram-board" data-mermaid="graph">
+          <div class="work-graph-line"><div class="node completed-node">WI-1 · Balance<br><small>Read-only · completed</small></div><span class="parallel-mark">∥</span><div class="node consent-node">WI-2 · Transfer<br><small>Consent 1 → commit</small></div><span class="dep-link">completion prerequisite →</span><div class="node blocked-node">WI-3 · Bill payment<br><small>Blocked → Consent 2</small></div></div><div class="workflow-owner">AUTHORITATIVE WORKFLOW STATE: one RequestWorkflow instance · WI-1, WI-2, WI-3 · processed command IDs + dependency graph</div>
+        </div></div></div>
+        <div class="callout"><b>Failure behavior</b><span>If consent for WI-2 is rejected or expires, WI-1 remains completed, WI-2 is terminal for that challenge, and WI-3 remains blocked.</span></div>
+      </section>
+
+      <section class="tab-panel" id="tab-natural">
+        <div class="section-intro"><div><span class="eyebrow">04 / NATURAL-LANGUAGE REQUEST SEQUENCE</span><h2>Interpret once, policy-check first, then start one durable workflow</h2><p>WORKFLOW_STARTED is an acknowledgement of durable acceptance, not evidence that a bank transaction completed.</p></div></div>
+        <div class="diagram-shell"><div class="diagram-toolbar"><span>CALLER · EXECUTOR · CONTRACT · RESPONSE · WORKFLOW OWNER</span><span>FREE SCROLL · STICKY PARTICIPANTS</span></div><div class="diagram-scroll" tabindex="0"><div class="sequence-diagram">
+          <div class="swimlane-header"><span class="lane-label">CALLER / EXECUTOR</span><span class="participant blue">Customer + Browser</span><span class="participant blue">Conversation Manager</span><span class="participant blue">Central Orchestrator</span><span class="participant amber">Policy Service</span><span class="participant purple">Workflow Access</span><span class="participant purple">Request Workflow</span></div>
+          <div class="sequence-row"><span class="lane-label">1 · REQUEST</span><span class="sequence-message">CustomerMessage →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Channel Gateway routes natural language to Conversation Manager.</span></div>
+          <div class="sequence-row"><span class="lane-label">2 · PLAN</span><span class="sequence-empty"></span><span class="sequence-message">POST /orchestrate →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Conversation Manager caller · Central Orchestrator executor.</span></div>
+          <div class="sequence-row"><span class="lane-label">3 · POLICY</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message">PreAgentPolicyRequest →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Policy returns decisions only; does not invoke agent or start workflow.</span></div>
+          <div class="sequence-row"><span class="lane-label">4 · DECISION</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message response">← PERMIT / obligations</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Central Orchestrator applies the policy decision.</span></div>
+          <div class="sequence-row"><span class="lane-label">5 · START</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message">StartPlanRequest →</span><span class="sequence-message">StartWorkflow →</span><span class="sequence-empty"></span><span class="sequence-note">One durable workflow containing N work items.</span></div>
+          <div class="sequence-row"><span class="lane-label">6 · ACK</span><span class="sequence-empty"></span><span class="sequence-message response">← WORKFLOW_STARTED</span><span class="sequence-message response">← PlanAccepted</span><span class="sequence-message response">← workflowId</span><span class="sequence-message response">← WorkflowStarted</span><span class="sequence-note">Immediate response means accepted for processing, not bank completion.</span></div>
+        </div></div></div>
+        <div class="diagram-shell mermaid-shell"><div class="diagram-toolbar"><span>MERMAID SEQUENCE · NATURAL-LANGUAGE REQUEST</span></div><pre class="mermaid">sequenceDiagram
+          actor Customer
+          participant UI as Browser Channel UI
+          participant CM as Conversation Manager
+          participant Orch as Central Orchestrator
+          participant Policy as Policy Service
+          participant WA as Workflow Access
+          participant WF as Request Workflow
+          Customer->>UI: Natural-language request
+          UI->>CM: CustomerMessage
+          CM->>Orch: POST orchestrate
+          Orch->>Policy: PreAgentPolicyRequest
+          Policy-->>Orch: PolicyDecision(s)
+          Note over Policy: Decisions only; no agent or workflow invocation
+          Orch->>WA: StartPlanRequest
+          WA->>WF: Start one workflow with N work items
+          WF-->>WA: WorkflowStarted(workflowId)
+          WA-->>Orch: PlanAccepted
+          Orch-->>CM: WORKFLOW_STARTED
+          CM-->>UI: In progress; not bank completion</pre></div>
+        <div class="sequence-caption"><b>State owner:</b> Request Workflow owns authoritative request/work-item state. Conversation Manager maintains a customer-visible projection from asynchronous workflow events.</div>
+      </section>
+
+      <section class="tab-panel" id="tab-prepare">
+        <div class="section-intro"><div><span class="eyebrow">05 / WORK-ITEM PREPARATION AND CONSENT</span><h2>Agent work ends before the customer is asked to approve</h2><p>Each financial work item receives its own challenge bound to the exact validated payload.</p></div><span class="rule-pill amber-rule">PAYLOAD HASH · PER WORK ITEM</span></div>
+        <div class="diagram-shell"><div class="diagram-toolbar"><span>PREPARE / VALIDATE FIRST · CONSENT AFTERWARD · DURABLE WAIT</span></div><div class="diagram-scroll" tabindex="0"><div class="sequence-diagram">
+          <div class="swimlane-header"><span class="lane-label">CALLER / EXECUTOR</span><span class="participant purple">Request Workflow</span><span class="participant blue">Specialist Agent</span><span class="participant blue">Read / Prepare Gateway</span><span class="participant amber">Policy + Confirmation</span><span class="participant purple">Event Backbone</span><span class="participant blue">Conversation Manager + UI</span></div>
+          <div class="sequence-row"><span class="lane-label">PREPARE</span><span class="sequence-message">Scoped PREPARE task →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Exactly one scoped work item is sent to the Specialist Agent.</span></div>
+          <div class="sequence-row"><span class="lane-label">READ / PREPARE</span><span class="sequence-empty"></span><span class="sequence-message">Read / prepare request →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Agent uses approved capability APIs, never Commit APIs.</span></div>
+          <div class="sequence-row"><span class="lane-label">VALIDATE</span><span class="sequence-empty"></span><span class="sequence-message response">← Prepared work item</span><span class="sequence-message">Bank validation →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Agent activity finishes; exact transaction payload is validated.</span></div>
+          <div class="sequence-row"><span class="lane-label">CHALLENGE</span><span class="sequence-message">Transaction policy →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message">Create challenge + payload hash →</span><span class="sequence-empty"></span><span class="sequence-note">Confirmation Service binds each item to its own consent challenge.</span></div>
+          <div class="sequence-row"><span class="lane-label">WAIT</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message response">← Challenge</span><span class="sequence-message">Consent required event →</span><span class="sequence-note">Workflow persists AWAITING_CONSENT; no agent remains active while waiting.</span></div>
+          <div class="sequence-row"><span class="lane-label">PRESENT</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message">Presentation model →</span><span class="sequence-message response">← Workflow event</span><span class="sequence-message response">← Consent UI</span><span class="sequence-note">Channel-neutral model; browser owns visual rendering.</span></div>
+        </div></div></div>
+        <div class="diagram-shell mermaid-shell"><div class="diagram-toolbar"><span>MERMAID SEQUENCE · PREPARE BEFORE CONSENT</span></div><pre class="mermaid">sequenceDiagram
+          participant WF as Request Workflow
+          participant Agent as Specialist Agent
+          participant Cap as Capability Gateway
+          participant Confirm as Confirmation Service
+          participant Events as Event Backbone
+          participant CM as Conversation Manager
+          WF->>Agent: Scoped PREPARE work item
+          Agent->>Cap: Read and prepare request
+          Cap-->>Agent: Validated payload
+          Agent-->>WF: Typed prepared item
+          Note over Agent,WF: Agent activity ends before consent wait
+          WF->>Confirm: Create challenge + payload hash
+          Confirm-->>WF: Per-item challenge
+          WF->>Events: Consent required
+          Events-->>CM: Async workflow event
+          CM->>Confirm: Get consent presentation
+          Confirm-->>CM: Masked channel-neutral details</pre></div>
+        <div class="callout amber-callout"><b>Consent is not conversational</b><span>A chat “yes” does not authorize a financial transaction. The UI submits a structured challenge ID + payload hash + simulated authentication evidence.</span></div>
+      </section>
+
+      <section class="tab-panel" id="tab-resume">
+        <div class="section-intro"><div><span class="eyebrow">06 / CONSENT APPROVAL AND WORKFLOW RESUME</span><h2>Structured action bypasses the Orchestrator</h2><p>Confirmation Service verifies the exact challenge, then signals the existing workflow. A deterministic worker—not an agent—calls commit.</p></div></div>
+        <div class="diagram-shell"><div class="diagram-toolbar"><span>CONSENT PATH ≠ NATURAL-LANGUAGE PATH · COMMIT IDENTITY: TRANSACTION WORKER ONLY</span></div><div class="diagram-scroll" tabindex="0"><div class="sequence-diagram">
+          <div class="swimlane-header"><span class="lane-label">CALLER / EXECUTOR</span><span class="participant blue">Customer + UI</span><span class="participant amber">Confirmation Service</span><span class="participant purple">Workflow Access</span><span class="participant purple">Existing Workflow</span><span class="participant green">Transaction Worker</span><span class="participant green">Commit Gateway + Bank</span><span class="participant purple">Events → Conversation Manager</span></div>
+          <div class="sequence-row"><span class="lane-label">DECIDE</span><span class="sequence-message">Structured consent decision →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">UI provides challenge ID, expected payload hash, decision, evidence and commandId.</span></div>
+          <div class="sequence-row"><span class="lane-label">VERIFY</span><span class="sequence-empty"></span><span class="sequence-message">Verify owner, expiry, evidence, hash →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Confirmation Service creates immutable Confirmation Record.</span></div>
+          <div class="sequence-row"><span class="lane-label">RESUME</span><span class="sequence-message response">← CONSENT_RECEIVED</span><span class="sequence-message">WORK_ITEM_CONSENT_APPROVED →</span><span class="sequence-message">Signal existing workflow →</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-note">Immediate acknowledgement means command accepted, not transaction completed.</span></div>
+          <div class="sequence-row"><span class="lane-label">EXECUTE</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message">Verify + invoke activity →</span><span class="sequence-message">Execute transaction →</span><span class="sequence-empty"></span><span class="sequence-note">Worker checks policy, Confirmation Record, hash, dependency and idempotency.</span></div>
+          <div class="sequence-row"><span class="lane-label">COMMIT</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message">Commit request →</span><span class="sequence-message">Bank instruction →</span><span class="sequence-note">Mock Bank API owns authoritative status and reference.</span></div>
+          <div class="sequence-row"><span class="lane-label">EVENT</span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-empty"></span><span class="sequence-message response">← COMPLETED / UNKNOWN</span><span class="sequence-empty"></span><span class="sequence-message">Authoritative result →</span><span class="sequence-message">SSE customer status</span><span class="sequence-note">UNKNOWN is reconciled through status lookup; commit is not blindly retried.</span></div>
+        </div></div></div>
+        <div class="diagram-shell mermaid-shell"><div class="diagram-toolbar"><span>MERMAID SEQUENCE · STRUCTURED CONSENT BYPASSES ORCHESTRATOR</span></div><pre class="mermaid">sequenceDiagram
+          actor Customer
+          participant UI as Browser Channel UI
+          participant Confirm as Confirmation Service
+          participant WA as Workflow Access Service
+          participant WF as Existing Request Workflow
+          participant Worker as Transaction Worker
+          participant Bank as Commit Gateway + Bank
+          Customer->>UI: Approve exact transaction
+          UI->>Confirm: Structured challengeId + hash + evidence
+          Confirm->>Confirm: Validate expiry, owner, evidence, hash
+          Confirm->>WA: Consent-approved workflow command
+          WA->>WF: Signal existing workflow
+          Confirm-->>UI: CONSENT_RECEIVED acknowledgement
+          WF->>Worker: Deterministic transaction activity
+          Worker->>Bank: Commit using stable idempotency key
+          Bank-->>Worker: COMPLETED, FAILED or UNKNOWN
+          Note over Worker,Bank: UNKNOWN invokes status reconciliation, never blind commit retry
+          Bank-->>WF: Authoritative transaction outcome</pre></div>
+      </section>
+
+      <section class="tab-panel" id="tab-statuses">
+        <div class="section-intro"><div><span class="eyebrow">07 / REQUEST AND RESPONSE STATUSES</span><h2>Model meaningful states, not fabricated completion percentages</h2><p>Immediate acknowledgement, deterministic execution and authoritative bank outcomes have different meanings.</p></div></div>
+        <div class="status-groups"><div><h3>Work-item states</h3><div class="status-list"><span>RECEIVED</span><span>POLICY_CHECK</span><span>READY</span><span>PREPARING</span><span>VALIDATING</span><span>AWAITING_CONSENT</span><span>CONFIRMED</span><span>EXECUTING</span><span>BLOCKED_BY_DEPENDENCY</span><span>COMPLETED</span><span>FAILED</span><span>UNKNOWN</span><span>CONSENT_REJECTED</span><span>CONSENT_EXPIRED</span></div></div><div><h3>Response meanings</h3><table><thead><tr><th>Status</th><th>Meaning</th><th>Authority</th></tr></thead><tbody><tr><td>WORKFLOW_STARTED</td><td>Accepted into durable processing</td><td>Workflow Access Service</td></tr><tr><td>CONSENT_RECEIVED</td><td>Structured consent command accepted</td><td>Confirmation Service / Workflow</td></tr><tr><td>EXECUTING</td><td>Deterministic transaction execution started</td><td>Request Workflow</td></tr><tr><td>COMPLETED</td><td>Bank confirmed successful completion</td><td>Bank API</td></tr><tr><td>FAILED</td><td>Authoritative failure confirmed</td><td>Bank API / deterministic service</td></tr><tr><td>UNKNOWN</td><td>Outcome unresolved; status reconciliation underway</td><td>Bank API status lookup</td></tr></tbody></table></div></div>
+        <div class="callout red-callout"><b>Unknown is not a terminal answer</b><span>Show “Checking transaction status”, call the authoritative status endpoint and resolve the result. Never present UNKNOWN as success/failure and never retry commit blindly.</span></div>
+      </section>
+
+      <section class="tab-panel" id="tab-ownership">
+        <div class="section-intro"><div><span class="eyebrow">08 / CALLER, EXECUTOR AND STATE OWNER</span><h2>Authority follows responsibility</h2><p>Calls, events, projections and system-of-record status are deliberately distinguished.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Operation</th><th>Caller</th><th>Executor</th><th>Authoritative state owner</th></tr></thead><tbody>
+          <tr><td>Submit customer message</td><td>Browser / Channel Gateway</td><td>Conversation Manager</td><td>Conversation Manager (turn)</td></tr>
+          <tr><td>Interpret natural language</td><td>Conversation Manager</td><td>Central Orchestrator</td><td>Request Workflow (accepted plan)</td></tr>
+          <tr><td>Evaluate pre-agent policy</td><td>Central Orchestrator</td><td>Policy Service</td><td>Policy decision record</td></tr>
+          <tr><td>Prepare one work item</td><td>Request Workflow</td><td>Specialist Agent</td><td>Request Workflow (work item)</td></tr>
+          <tr><td>Create consent challenge</td><td>Request Workflow</td><td>Confirmation Service</td><td>Confirmation Service</td></tr>
+          <tr><td>Validate customer approval</td><td>Channel Gateway</td><td>Confirmation Service</td><td>Confirmation Service (evidence)</td></tr>
+          <tr><td>Resume the workflow</td><td>Confirmation Service</td><td>Workflow Access Service</td><td>Existing Request Workflow</td></tr>
+          <tr><td>Execute transaction activity</td><td>Request Workflow</td><td>Transaction Worker</td><td>Request Workflow (execution state)</td></tr>
+          <tr><td>Commit financial transaction</td><td>Transaction Worker</td><td>Commit Gateway + Bank API</td><td>Bank system of record</td></tr>
+          <tr><td>Present customer-visible status</td><td>Event Backbone</td><td>Conversation Manager → SSE</td><td>Conversation Manager (projection)</td></tr>
+        </tbody></table></div>
+      </section>
+
+      <section class="tab-panel" id="tab-contracts">
+        <div class="section-intro"><div><span class="eyebrow">09 / API CONTRACTS</span><h2>Stable contracts, explicit identities and traceable events</h2><p>Generated OpenAPI is exposed by the local FastAPI service. Amounts use strings/Decimal, never binary floating point.</p></div><a class="action-link" href="http://localhost:8000/docs" target="_blank" rel="noreferrer">Open local API docs ↗</a></div>
+        <div class="contract-grid"><article><span>01 · NATURAL LANGUAGE</span><code>POST /api/conversations/{conversationId}/messages</code><p>Conversation Manager → Central Orchestrator. Response acknowledges a durable workflow and correlation context.</p></article><article><span>02 · STRUCTURED CONSENT</span><code>POST /api/confirmation-challenges/{challengeId}/decision</code><p>Channel → Confirmation Service → Workflow Access Service → existing workflow. Bypasses the Orchestrator.</p></article><article><span>03 · WORKFLOW ACCESS</span><code>POST /api/workflows<br>POST /api/workflows/{id}/commands<br>GET /api/workflows/{id}/customer-visible-state</code><p>Internal service identities authorize typed start, signal and query operations.</p></article><article><span>04 · BANK EXECUTION</span><code>POST /api/commit/transfers<br>POST /api/commit/bill-payments<br>GET /api/bank/transactions/{idempotencyKey}/status</code><p>Commit accepts transaction-worker only. Status lookup reconciles UNKNOWN without a commit retry.</p></article></div>
+        <h3 class="subheading">Trace envelope (where applicable)</h3><pre class="code-sample">schemaVersion · messageId / eventId · conversationId · workflowId
+workItemId · correlationId · traceId · occurredAt
+
+Common error: errorId · code · category · retryability
+customerAction · correlationId</pre>
+      </section>
+
+      <section class="tab-panel" id="tab-technology">
+        <div class="section-intro"><div><span class="eyebrow">10 / TECHNOLOGY MAPPING</span><h2>Prototype choices preserve production boundaries</h2><p>The application contract remains independent from the agent framework, model provider and workflow engine.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Logical component</th><th>Local demo</th><th>Production-compatible direction</th></tr></thead><tbody>
+          <tr><td>Channel UI</td><td>React + TypeScript + Vite</td><td>Mobile or contact-center app; API gateway</td></tr>
+          <tr><td>Conversation / orchestration</td><td>FastAPI service modules; deterministic intent rules</td><td>Custom service; framework behind stable APIs</td></tr>
+          <tr><td>Policy</td><td>Deterministic in-process policy decision</td><td>OPA, Cedar or bank policy service</td></tr>
+          <tr><td>Request Workflow</td><td>SQLAlchemy + SQLite + LocalWorkflowProvider</td><td>Temporal, Camunda, Durable Functions or bank BPM</td></tr>
+          <tr><td>Event Backbone</td><td>In-process asynchronous pub/sub + SSE</td><td>Service Bus, Kafka or bank event platform</td></tr>
+          <tr><td>Banking APIs</td><td>Synthetic capability, commit and status gateways</td><td>OAuth 2.0 / mTLS governed bank API and system of record</td></tr>
+          <tr><td>Observability</td><td>Correlation, workflow and event trace records</td><td>OpenTelemetry + approved monitoring platform</td></tr>
+          <tr><td>Identity / keys</td><td>Non-secret mock identity header</td><td>OIDC, workload identity, mTLS and managed HSM/secrets</td></tr>
+        </tbody></table></div>
+      </section>
+      <details class="source-content"><summary>Open the full architecture source rendered from Markdown</summary><div id="markdown-source" class="markdown-content"><p>Loading the local architecture source…</p></div></details>
+    </article>
+  </main>
+  <script src="vendor/mermaid.min.js"></script>
+  <script src="presentation.js"></script>
+</body>
+</html>
